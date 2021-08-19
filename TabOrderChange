@@ -1,0 +1,78 @@
+#!/usr/bin/python
+
+# Zoe Bogner, Instructure Inc. - 2020.05.31
+
+import requests # https://pypi.org/project/requests/
+import json
+
+# API Token
+# Instructions to generate a token: https://community.canvaslms.com/t5/Admin-Guide/How-do-I-manage-API-access-tokens-as-an-admin/ta-p/89 
+token      = "17~Z6rMS2eLO2S5ruKtQ1hEeQo5ipqqUYp9Ps0MKEmSU7xtJZZKT1AGU5LIybflDRhF" 
+# API User requires permissions to do the following:
+# - Act as user
+# - courses - manage login details
+# - courses - view list
+
+# Canvas URL
+domain     = "dstark.instructure.com"
+
+# Subaccount to target (default = '1')
+account_id = '1'
+
+
+##############################################################################
+
+
+REQUEST_HEADERS    = {'Authorization' : 'Bearer ' + '%s' % token}
+API = 'https://' + domain + '/api/v1/'
+
+
+# Get all course tabs
+courses = []
+courses_endpoint = API + 'accounts/%s/courses' % (account_id)
+
+# Results are paginated. Iterate over pages until all records retrieved 
+not_done = True
+while not_done:
+    courses_request = requests.get(courses_endpoint,headers=REQUEST_HEADERS)
+    courses+=courses_request.json()
+    courses_formatted_json = json.dumps(courses, indent=2)
+    print(courses_formatted_json)
+    print(courses_request.links)
+    if 'next' in courses_request.links.keys():
+        courses_endpoint = courses_request.links['next']['url']
+    else:
+        not_done = False
+
+# Print how many courses were found
+print ("=> Done getting courses. " + str(len(courses)) + " courses found")
+
+# Load the response as JSON
+response_data = courses
+
+# Exit if there were no courses in the returned data
+if not response_data:
+  print ('No courses found.')
+  exit(0)
+
+# Loop through the courses, populating the user_ids list with their canvas ids
+user_ids = [s['id'] for s in response_data]
+for user in user_ids:
+    # Get user's communication channel
+    com_channel_endpoint = API + 'courses/%s/communication_channels' % user
+    com_request = requests.get(com_channel_endpoint,headers=REQUEST_HEADERS)
+    com_channels = []
+    com_channels+=com_request.json()
+
+    # debug
+    #com_requests_formatted = json.dumps(com_channels, indent=2)
+    #print(com_requests_formatted)
+
+    #update each channel to disable all 'new_account_user' notifications
+    for channel in com_channels:
+        print("=> Updating user: '%s' Communication channel: '%s' Channel type: '%s'" % (user, channel['id'], channel['type']))
+
+        pref_endpoint = API + 'courses/self/communication_channels/%s/notification_preferencs/new_account_user?as_user_id=%s&notification_preferences[frequency]=never' % (channel['id'], user)
+        pref_request = requests.put(pref_endpoint, headers=REQUEST_HEADERS)
+
+print ("User update complete")
