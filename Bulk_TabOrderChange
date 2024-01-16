@@ -1,0 +1,79 @@
+import requests # https://pypi.org/project/requests/
+import json
+
+# API Token
+# Instructions to generate a token: https://community.canvaslms.com/t5/Admin-Guide/How-do-I-manage-API-access-tokens-as-an-admin/ta-p/89 
+token      = "17~Z6rMS2eLO2S5ruKtQ1hEeQo5ipqqUYp9Ps0MKEmSU7xtJZZKT1AGU5LIybflDRhF" 
+# API User requires permissions to do the following:
+# - Act as user
+# - courses - manage login details
+# - courses - view list
+
+# Canvas URL
+domain     = "dstark.instructure.com"
+
+# Subaccount to target (default = '1')
+account_id = '1'
+
+
+##############################################################################
+
+
+REQUEST_HEADERS    = {'Authorization' : 'Bearer ' + '%s' % token}
+API = 'https://' + domain + '/api/v1/'
+
+
+# Get all courses
+courses = []
+courses_endpoint = API + 'accounts/%s/courses' % (account_id)
+
+# Results are paginated. Iterate over pages until all records retrieved 
+not_done = True
+while not_done:
+    courses_request = requests.get(courses_endpoint,headers=REQUEST_HEADERS)
+    courses+=courses_request.json()
+    courses_formatted_json = json.dumps(courses, indent=2)
+    print(courses_formatted_json)
+    print(courses_request.links)
+    if 'next' in courses_request.links.keys():
+        courses_endpoint = courses_request.links['next']['url']
+    else:
+        not_done = False
+
+# Print how many courses were found
+print ("=> Done getting courses. " + str(len(courses)) + " courses found")
+
+# Load the response as JSON
+response_data = courses
+
+# Exit if there were no courses in the returned data
+if not response_data:
+  print ('No courses found.')
+  exit(0)
+
+# Loop through the courses, populating the course_ids list with their canvas ids
+course_ids = [s['id'] for s in response_data]
+for course in course_ids:
+    # Get course tabs
+    tabs_endpoint = API + 'courses/%s/tabs' % course
+    tabs_request = requests.get(tabs_endpoint,headers=REQUEST_HEADERS)
+    tabs = []
+    tabs +=tabs_request.json()
+
+    # debug
+    #tabs
+    #tabs_formatted = json.dumps(tabs, indent=2)
+    #print(tabs_formatted)
+
+    #update the Studio tab in each course to position 4
+    #for tab in tabs:
+    #print("=> Updating course: '%s' Tab: '%s' Position: '%s'" % (course, tab['id'], tab['position']))
+
+    position_endpoint = API + 'courses/%s/tabs/context_external_tool_106?position=4&hidden=false' % course
+    position_request = requests.put(position_endpoint, REQUEST_HEADERS)
+    #position_endpoint = API + 'courses/%s/tabs/%s/context_external_tool_X?position=5&hidden=false % (course, tab['id'])
+    #position_request = requests.put(position_endpoint, REQUEST_HEADERS)
+    
+    print(position_request.request.body)
+
+print ("tab update complete")
