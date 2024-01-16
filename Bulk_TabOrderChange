@@ -3,17 +3,21 @@ import json
 
 # API Token
 # Instructions to generate a token: https://community.canvaslms.com/t5/Admin-Guide/How-do-I-manage-API-access-tokens-as-an-admin/ta-p/89 
-token      = "17~Z6rMS2eLO2S5ruKtQ1hEeQo5ipqqUYp9Ps0MKEmSU7xtJZZKT1AGU5LIybflDRhF" 
+#token      = "17~Z6rMS2eLO2S5ruKtQ1hEeQo5ipqqUYp9Ps0MKEmSU7xtJZZKT1AGU5LIybflDRhF" 
+token       = "13824~lhKxcNGKIfnnsGANWxwneMJ8PBnq9AaT0Ij6ZHjvI7YmQ2XFWN5McWNlmlZLYSnp" #zbogner
+
 # API User requires permissions to do the following:
 # - Act as user
 # - courses - manage login details
 # - courses - view list
 
 # Canvas URL
-domain     = "dstark.instructure.com"
+#domain     = "dstark.instructure.com"
+domain      = "zbogner.beta.instructure.com"
 
 # Subaccount to target (default = '1')
-account_id = '1'
+#account_id = '1'
+account_id = '44'
 
 
 ##############################################################################
@@ -51,29 +55,28 @@ if not response_data:
   print ('No courses found.')
   exit(0)
 
-# Loop through the courses, populating the course_ids list with their canvas ids
+# Loop through the courses, populating the course_ids list with their ids
 course_ids = [s['id'] for s in response_data]
 for course in course_ids:
-    # Get course tabs
-    tabs_endpoint = API + 'courses/%s/tabs' % course
-    tabs_request = requests.get(tabs_endpoint,headers=REQUEST_HEADERS)
-    tabs = []
-    tabs +=tabs_request.json()
-
-    # debug
-    #tabs
-    #tabs_formatted = json.dumps(tabs, indent=2)
-    #print(tabs_formatted)
 
     #update the Studio tab in each course to position 4
-    #for tab in tabs:
-    #print("=> Updating course: '%s' Tab: '%s' Position: '%s'" % (course, tab['id'], tab['position']))
+    tool_id = "context_external_tool_244"
+    tool_pos = "4"
+    print("=> Updating course: '%s' Tab: '%s' Position: '%s'" % (course, tool_id, tool_pos)) #debugging 
+    position_endpoint = API + 'courses/%s/tabs/%s?position=%s&hidden=false' % (course, tool_id, tool_pos)
+    position_request = requests.put(position_endpoint, headers=REQUEST_HEADERS)
+    print(position_request.json()) #debugging
+    print("") # debugging (line break)
 
-    position_endpoint = API + 'courses/%s/tabs/context_external_tool_106?position=4&hidden=false' % course
-    position_request = requests.put(position_endpoint, REQUEST_HEADERS)
-    #position_endpoint = API + 'courses/%s/tabs/%s/context_external_tool_X?position=5&hidden=false % (course, tab['id'])
-    #position_request = requests.put(position_endpoint, REQUEST_HEADERS)
-    
-    print(position_request.request.body)
+    #update the Zoom tab in each course to position 4
+    tool_id = "context_external_tool_3"
+    tool_pos = "5"
+    print("=> Updating course: '%s' Tab: '%s' Position: '%s'" % (course, tool_id, tool_pos)) #debugging 
+    position_endpoint = API + 'courses/%s/tabs/%s?position=%s&hidden=false' % (course, tool_id, tool_pos)
+    position_request = requests.put(position_endpoint, headers=REQUEST_HEADERS)
+    print(position_request.json()) #debugging
+    print("") # debugging (line break)
+
+    print("----") #debugging
 
 print ("tab update complete")
