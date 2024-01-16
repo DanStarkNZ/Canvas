@@ -7,14 +7,14 @@ import json
 
 # API Token
 # Instructions to generate a token: https://community.canvaslms.com/t5/Admin-Guide/How-do-I-manage-API-access-tokens-as-an-admin/ta-p/89 
-token      = "17~Z6rMS2eLO2S5ruKtQ1hEeQo5ipqqUYp9Ps0MKEmSU7xtJZZKT1AGU5LIybflDRhF" 
+token      = "<place your Canvas bearer token here>" 
 # API User requires permissions to do the following:
 # - Act as user
 # - courses - manage login details
 # - courses - view list
 
 # Canvas URL
-domain     = "dstark.instructure.com"
+domain     = "<place your Canvas instance URL here>"
 
 # Subaccount to target (default = '1')
 account_id = '1'
@@ -35,7 +35,7 @@ courses_endpoint = API + 'accounts/%s/courses' % (account_id)
 not_done = True
 while not_done:
     courses_request = requests.get(courses_endpoint,headers=REQUEST_HEADERS)
-    courses+=courses_request.json()
+    courses += courses_request.json()
     courses_formatted_json = json.dumps(courses, indent=2)
     print(courses_formatted_json)
     print(courses_request.links)
@@ -60,9 +60,10 @@ user_ids = [s['id'] for s in response_data]
 for user in user_ids:
     # Get user's communication channel
     com_channel_endpoint = API + 'courses/%s/communication_channels' % user
-    com_request = requests.get(com_channel_endpoint,headers=REQUEST_HEADERS)
+    com_results = requests.get(com_channel_endpoint,headers=REQUEST_HEADERS)
     com_channels = []
-    com_channels+=com_request.json()
+	# store the JSON representation of communication channels
+    com_channels = com_results.json()
 
     # debug
     #com_requests_formatted = json.dumps(com_channels, indent=2)
